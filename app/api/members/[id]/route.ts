@@ -1,4 +1,4 @@
-import { deleteMember } from "@/lib/supabase";
+import { deleteMember } from "../../../lib/supabase";
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {

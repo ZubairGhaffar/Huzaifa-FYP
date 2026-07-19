@@ -1,8 +1,8 @@
-import { Member, MemberInput } from "@/types";
+import { Member, MemberInput } from "../../types";
 
 type CreateMemberPayload = {
   input: MemberInput;
-  faceEmbedding: number[];
+  faceEmbedding: ArrayLike<number>;
   faceImageBlob?: Blob | null;
 };
 
@@ -29,7 +29,7 @@ export async function createMember(payload: CreateMemberPayload): Promise<Member
   if (payload.input.phone) formData.append("phone", payload.input.phone);
   if (payload.input.notes) formData.append("notes", payload.input.notes);
 
-  formData.append("faceEmbedding", JSON.stringify(payload.faceEmbedding));
+  formData.append("faceEmbedding", JSON.stringify(Array.from(payload.faceEmbedding)));
 
   if (payload.faceImageBlob) {
     formData.append("faceImage", payload.faceImageBlob, "face.jpg");

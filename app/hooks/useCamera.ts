@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { CameraConfig, CameraStatus } from "@/types";
-import { DEFAULT_CAMERA_CONFIG, JPEG_QUALITY } from "@/lib/config";
+import { CameraConfig, CameraStatus } from "../types";
+import { DEFAULT_CAMERA_CONFIG, JPEG_QUALITY } from "../lib/config";
 
 interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;

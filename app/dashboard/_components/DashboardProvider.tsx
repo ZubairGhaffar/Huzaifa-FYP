@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import { useFrameSender } from "@/hooks/useFrameSender";
+import { useFrameSender } from "../../hooks/useFrameSender";
 
 type DashboardFrameSender = ReturnType<typeof useFrameSender>;
 

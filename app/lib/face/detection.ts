@@ -1,7 +1,7 @@
 // lib/face/detection.ts
 
-import { FaceDetectionResult } from "@/types";
-import { FACE_DETECTION_CONFIG } from "@/lib/config";
+import { FaceDetectionResult } from "../../types";
+import { FACE_DETECTION_CONFIG } from "../config";
 
 // Keep your existing detectFace function
 export async function detectFace(

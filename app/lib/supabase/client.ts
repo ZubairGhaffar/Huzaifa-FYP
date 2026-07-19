@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../config";
 
 function createMissingSupabaseClient() {
   const missingClientError = () => {

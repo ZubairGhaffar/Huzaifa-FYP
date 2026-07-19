@@ -7,8 +7,6 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -19,10 +17,7 @@
       {
         "name": "next"
       }
-    ],
-    "paths": {
-      "@/*": ["app/*"]
-    }
+    ]
   },
   "include": [
     "next-env.d.ts",

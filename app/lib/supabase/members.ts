@@ -1,6 +1,6 @@
 import { supabase } from "./client";
-import { Member, MemberInput } from "@/types";
-import { MEMBERS_TABLE, MEMBER_STORAGE_BUCKET } from "@/lib/config";
+import { Member, MemberInput } from "../../types";
+import { MEMBERS_TABLE, MEMBER_STORAGE_BUCKET } from "../config";
 
 export async function getAllMembers(): Promise<Member[]> {
   const { data, error } = await supabase
@@ -41,23 +41,26 @@ export async function addMember(
 
   if (faceImageBlob) {
     const fileName = `face-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(MEMBER_STORAGE_BUCKET)
-      .upload(fileName, faceImageBlob, {
-        contentType: "image/jpeg",
-        upsert: false,
-      });
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(MEMBER_STORAGE_BUCKET)
+        .upload(fileName, faceImageBlob, {
+          contentType: faceImageBlob.type || "image/jpeg",
+          upsert: false,
+        });
 
-    if (uploadError) {
-      console.error("[addMember] Storage upload error:", uploadError);
-      throw new Error(`Failed to upload face image: ${uploadError.message}`);
+      if (uploadError) {
+        console.warn("[addMember] Storage upload failed, saving member without image:", uploadError);
+      } else {
+        const { data: urlData } = supabase.storage
+          .from(MEMBER_STORAGE_BUCKET)
+          .getPublicUrl(uploadData.path);
+
+        faceImageUrl = urlData.publicUrl;
+      }
+    } catch (error) {
+      console.warn("[addMember] Storage upload threw, saving member without image:", error);
     }
-
-    const { data: urlData } = supabase.storage
-      .from(MEMBER_STORAGE_BUCKET)
-      .getPublicUrl(uploadData.path);
-
-    faceImageUrl = urlData.publicUrl;
   }
 
   const { data, error } = await supabase
@@ -92,22 +95,26 @@ export async function updateMember(
 
   if (newFaceImageBlob) {
     const fileName = `face-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(MEMBER_STORAGE_BUCKET)
-      .upload(fileName, newFaceImageBlob, {
-        contentType: "image/jpeg",
-        upsert: false,
-      });
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(MEMBER_STORAGE_BUCKET)
+        .upload(fileName, newFaceImageBlob, {
+          contentType: newFaceImageBlob.type || "image/jpeg",
+          upsert: false,
+        });
 
-    if (uploadError) {
-      throw new Error(`Failed to upload face image: ${uploadError.message}`);
+      if (uploadError) {
+        console.warn("[updateMember] Storage upload failed, updating member without image:", uploadError);
+      } else {
+        const { data: urlData } = supabase.storage
+          .from(MEMBER_STORAGE_BUCKET)
+          .getPublicUrl(uploadData.path);
+
+        faceImageUrl = urlData.publicUrl;
+      }
+    } catch (error) {
+      console.warn("[updateMember] Storage upload threw, updating member without image:", error);
     }
-
-    const { data: urlData } = supabase.storage
-      .from(MEMBER_STORAGE_BUCKET)
-      .getPublicUrl(uploadData.path);
-
-    faceImageUrl = urlData.publicUrl;
   }
 
   const updateData: Record<string, unknown> = {

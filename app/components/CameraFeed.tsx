@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { CameraStatus } from "@/types";
+import { CameraStatus } from "../types";
 
 interface CameraFeedProps {
   status: CameraStatus;

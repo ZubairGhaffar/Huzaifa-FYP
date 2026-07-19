@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Member } from "@/types";
-import { fetchMembers as fetchMembersApi, removeMember } from "@/lib/api/members";
+import { Member } from "../../types";
+import { fetchMembers as fetchMembersApi, removeMember } from "../../lib/api/members";
 
 interface MemberListProps {
   onRefresh?: number;

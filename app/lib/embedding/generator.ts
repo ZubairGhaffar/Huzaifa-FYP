@@ -1,4 +1,4 @@
-import { FACE_DETECTION_CONFIG } from "@/lib/config";
+import { FACE_DETECTION_CONFIG } from "../config";
 
 export function generateFaceEmbedding(imageData: ImageData): number[] {
   const { width, height, data } = imageData;
@@ -215,6 +215,13 @@ function computeStatisticalMoments(data: Uint8ClampedArray): number[] {
   const gMean = gValues.reduce((a, b) => a + b, 0) / gValues.length;
   const bMean = bValues.reduce((a, b) => a + b, 0) / bValues.length;
 
+  let minGray = Infinity;
+  let maxGray = -Infinity;
+  for (const value of gray) {
+    if (value < minGray) minGray = value;
+    if (value > maxGray) maxGray = value;
+  }
+
   const features = [
     mean / 255,
     std / 255,
@@ -223,9 +230,9 @@ function computeStatisticalMoments(data: Uint8ClampedArray): number[] {
     rMean / 255,
     gMean / 255,
     bMean / 255,
-    Math.max(...gray) / 255,
-    Math.min(...gray) / 255,
-    (Math.max(...gray) - Math.min(...gray)) / 255,
+    maxGray / 255,
+    minGray / 255,
+    (maxGray - minGray) / 255,
   ];
 
   while (features.length < 32) features.push(0);

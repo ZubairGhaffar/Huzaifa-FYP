@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { MemberInput } from "@/types";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { MemberInput } from "../../types";
 import { 
   detectFaceFromImage, 
   loadImageDataFromFile,
   imageDataToBlob 
-} from "@/lib/face/detection";
-import { generateFaceEmbedding } from "@/lib/embedding/generator";
-import { createMember } from "@/lib/api/members";
+} from "../../lib/face/detection";
+import { generateFaceEmbedding } from "../../lib/embedding/generator";
+import { createMember } from "../../lib/api/members";
 
 interface MemberFormProps {
   onMemberAdded?: () => void;
@@ -16,6 +16,7 @@ interface MemberFormProps {
 }
 
 interface ImageFile {
+  id: string; // Add unique ID for each image
   file: File;
   preview: string;
   faceDetected: boolean;
@@ -38,6 +39,21 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
   const [processingStatus, setProcessingStatus] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+
+  // Clean up on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // Clean up all object URLs when component unmounts
+      images.forEach(img => {
+        if (img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -82,6 +98,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
           }
 
           processedImages.push({
+            id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             file,
             preview,
             faceDetected: true,
@@ -95,18 +112,28 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
         }
       }
 
-      if (processedImages.length > 0) {
-        setImages(prev => [...prev, ...processedImages]);
-        setProcessingStatus(`Successfully processed ${processedImages.length} image(s)`);
-      } else {
-        setError("No valid face images were processed. Please upload images with clear faces.");
+      if (mountedRef.current) {
+        if (processedImages.length > 0) {
+          setImages(prev => {
+            // Ensure we don't exceed 5 images
+            const combined = [...prev, ...processedImages];
+            return combined.slice(0, 5);
+          });
+          setProcessingStatus(`Successfully processed ${processedImages.length} image(s)`);
+        } else {
+          setError("No valid face images were processed. Please upload images with clear faces.");
+        }
       }
 
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to process images";
-      setError(message);
+      if (mountedRef.current) {
+        const message = err instanceof Error ? err.message : "Failed to process images";
+        setError(message);
+      }
     } finally {
-      setIsProcessing(false);
+      if (mountedRef.current) {
+        setIsProcessing(false);
+      }
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -116,14 +143,17 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
   const removeImage = useCallback((index: number) => {
     setImages(prev => {
       const newImages = [...prev];
-      URL.revokeObjectURL(newImages[index].preview);
+      // Revoke the object URL to avoid memory leaks
+      if (newImages[index]?.preview) {
+        URL.revokeObjectURL(newImages[index].preview);
+      }
       newImages.splice(index, 1);
       return newImages;
     });
     setError(null);
   }, []);
 
-  const aggregateEmbeddings = (embeddings: Float32Array[]): Float32Array => {
+  const aggregateEmbeddings = (embeddings: ArrayLike<number>[]): Float32Array => {
     if (embeddings.length === 0) return new Float32Array(128);
     
     const length = embeddings[0].length;
@@ -141,6 +171,25 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
     
     return aggregated;
   };
+
+  const resetForm = useCallback(() => {
+    // Clean up all object URLs before resetting
+    images.forEach(img => {
+      if (img.preview) {
+        URL.revokeObjectURL(img.preview);
+      }
+    });
+    
+    setName("");
+    setRelationship("");
+    setEmail("");
+    setPhone("");
+    setNotes("");
+    setImages([]);
+    setSuccess(false);
+    setError(null);
+    setProcessingStatus("");
+  }, [images]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -166,8 +215,8 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
       setError(null);
 
       try {
-        const embeddings = [];
-        const faceBlobs = [];
+        const embeddings: number[][] = [];
+        const faceBlobs: Blob[] = [];
 
         for (const image of images) {
           if (image.faceImageData) {
@@ -192,32 +241,48 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
         await createMember({ 
           input: memberInput, 
           faceEmbedding: aggregateEmbedding,
-          faceImageBlobs: faceBlobs,
+          faceImageBlob: faceBlobs[0] ?? null,
         });
 
-        setSuccess(true);
+        if (mountedRef.current) {
+          setSuccess(true);
+        }
 
+        // Reset after delay
         setTimeout(() => {
-          images.forEach(img => URL.revokeObjectURL(img.preview));
-          setName("");
-          setRelationship("");
-          setEmail("");
-          setPhone("");
-          setNotes("");
-          setImages([]);
-          setSuccess(false);
-          onMemberAdded?.();
+          if (mountedRef.current) {
+            resetForm();
+            if (onMemberAdded) {
+              onMemberAdded();
+            }
+          }
         }, 1500);
 
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to save member";
-        setError(message);
+        if (mountedRef.current) {
+          const message = err instanceof Error ? err.message : "Failed to save member";
+          setError(message);
+        }
       } finally {
-        setIsSaving(false);
+        if (mountedRef.current) {
+          setIsSaving(false);
+        }
       }
     },
-    [name, relationship, email, phone, notes, images, onMemberAdded]
+    [name, relationship, email, phone, notes, images, onMemberAdded, resetForm]
   );
+
+  const handleCancel = useCallback(() => {
+    // Clean up object URLs
+    images.forEach(img => {
+      if (img.preview) {
+        URL.revokeObjectURL(img.preview);
+      }
+    });
+    if (onCancel) {
+      onCancel();
+    }
+  }, [images, onCancel]);
 
   return (
     <div className="member-form-container">
@@ -233,6 +298,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter full name"
             required
+            disabled={isSaving}
           />
         </div>
 
@@ -243,6 +309,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             value={relationship}
             onChange={(e) => setRelationship(e.target.value)}
             required
+            disabled={isSaving}
           >
             <option value="">Select relationship</option>
             <option value="father">Father</option>
@@ -271,6 +338,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="email@example.com"
+            disabled={isSaving}
           />
         </div>
 
@@ -282,6 +350,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+1 234 567 8900"
+            disabled={isSaving}
           />
         </div>
 
@@ -293,6 +362,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional notes..."
             rows={3}
+            disabled={isSaving}
           />
         </div>
 
@@ -305,13 +375,13 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
               accept="image/*"
               multiple
               onChange={handleImageUpload}
-              disabled={isProcessing || images.length >= 5}
+              disabled={isProcessing || images.length >= 5 || isSaving}
               style={{ display: 'none' }}
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessing || images.length >= 5}
+              disabled={isProcessing || images.length >= 5 || isSaving}
               className="btn btn-secondary"
             >
               {isProcessing ? "Processing..." : "Upload Images"}
@@ -328,7 +398,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
         {images.length > 0 && (
           <div className="image-gallery">
             {images.map((image, index) => (
-              <div key={index} className="image-item">
+              <div key={image.id || index} className="image-item">
                 <img 
                   src={image.preview} 
                   alt={`Member face ${index + 1}`} 
@@ -339,6 +409,7 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
                   onClick={() => removeImage(index)}
                   className="remove-image-btn"
                   title="Remove image"
+                  disabled={isSaving}
                 >
                   ×
                 </button>
@@ -362,7 +433,12 @@ export function MemberForm({ onMemberAdded, onCancel }: MemberFormProps) {
             {isSaving ? "Saving..." : "Save Member"}
           </button>
           {onCancel && (
-            <button type="button" onClick={onCancel} className="btn btn-ghost">
+            <button 
+              type="button" 
+              onClick={handleCancel} 
+              className="btn btn-ghost"
+              disabled={isSaving}
+            >
               Cancel
             </button>
           )}

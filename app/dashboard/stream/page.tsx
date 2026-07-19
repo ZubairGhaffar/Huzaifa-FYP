@@ -1,6 +1,6 @@
 "use client";
 
-import { CameraFeed, ControlPanel, StatusPanel } from "@/components";
+import { CameraFeed, ControlPanel, StatusPanel } from "../../components";
 import { useDashboardFrameSender } from "../_components/DashboardProvider";
 
 export default function StreamPage() {

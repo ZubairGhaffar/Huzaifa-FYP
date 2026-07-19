@@ -1,6 +1,6 @@
 "use client";
 
-import { AppState } from "@/types";
+import { AppState } from "../types";
 
 interface StatusPanelProps {
   state: AppState;

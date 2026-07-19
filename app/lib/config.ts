@@ -1,4 +1,4 @@
-import { CameraConfig, WebSocketConfig } from "@/types";
+import { CameraConfig, WebSocketConfig } from "../types";
 
 export const DEFAULT_CAMERA_CONFIG: CameraConfig = {
   width: 1280,
@@ -20,7 +20,7 @@ export const JPEG_QUALITY = 0.8;
 
 export const FACE_DETECTION_CONFIG = {
   minFaceSize: 40,
-  embeddingDimensions: 456,
+  embeddingDimensions: 512,
 } as const;
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

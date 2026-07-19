@@ -1,5 +1,5 @@
-import { addMember, getAllMembers } from "@/lib/supabase";
-import { MemberInput } from "@/types";
+import { addMember, getAllMembers } from "../../lib/supabase";
+import { MemberInput } from "../../types";
 
 export async function GET() {
   try {
@@ -16,8 +16,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
 
     const faceEmbeddingField = formData.get("faceEmbedding");
-    const faceEmbedding =
-      typeof faceEmbeddingField === "string" ? (JSON.parse(faceEmbeddingField) as number[]) : [];
+    const parsedEmbedding =
+      typeof faceEmbeddingField === "string" ? JSON.parse(faceEmbeddingField) : [];
+    const faceEmbedding = Array.isArray(parsedEmbedding)
+      ? parsedEmbedding.map((value) => Number(value))
+      : Object.values(parsedEmbedding as Record<string, unknown>).map((value) => Number(value));
 
     const memberInput: MemberInput = {
       name: String(formData.get("name") ?? "").trim(),

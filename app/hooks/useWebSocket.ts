@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { ConnectionStatus, WebSocketConfig } from "@/types";
-import { DEFAULT_WS_CONFIG } from "@/lib/config";
+import { ConnectionStatus, WebSocketConfig } from "../types";
+import { DEFAULT_WS_CONFIG } from "../lib/config";
 
 interface UseWebSocketReturn {
   status: ConnectionStatus;

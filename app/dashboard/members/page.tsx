@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MemberForm, MemberList } from "@/components";
-import { useDashboardFrameSender } from "../_components/DashboardProvider";
+import { MemberForm, MemberList } from "../../components";
 
 export default function MembersPage() {
-  const { videoRef } = useDashboardFrameSender();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleMemberAdded = () => {
@@ -17,10 +15,10 @@ export default function MembersPage() {
       <div className="dashboard-panel">
         <div className="panel-heading">
           <h2>Member form</h2>
-          <p>Capture a face from the shared camera session and store it in Supabase through Next API routes.</p>
+          <p>Upload face images for a member and store the aggregated embedding in Supabase through Next API routes.</p>
         </div>
 
-        <MemberForm videoRef={videoRef} onMemberAdded={handleMemberAdded} />
+        <MemberForm onMemberAdded={handleMemberAdded} />
       </div>
 
       <div className="dashboard-panel">

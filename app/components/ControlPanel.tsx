@@ -1,6 +1,6 @@
 "use client";
 
-import { CameraStatus, ConnectionStatus } from "@/types";
+import { CameraStatus, ConnectionStatus } from "../types";
 
 interface ControlPanelProps {
   cameraStatus: CameraStatus;

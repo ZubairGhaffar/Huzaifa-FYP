@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { AppState, CameraConfig, WebSocketConfig } from "@/types";
+import { AppState, CameraConfig, WebSocketConfig } from "../types";
 import { useCamera } from "./useCamera";
 import { useWebSocket } from "./useWebSocket";
-import { DEFAULT_CAMERA_CONFIG, DEFAULT_WS_CONFIG } from "@/lib/config";
+import { DEFAULT_CAMERA_CONFIG, DEFAULT_WS_CONFIG } from "../lib/config";
 
 interface UseFrameSenderReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
